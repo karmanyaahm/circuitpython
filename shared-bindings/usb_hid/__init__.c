@@ -23,9 +23,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
-#include "py/obj.h"
-#include "py/mphal.h"
+#include <string.h>
+#include "py/objproperty.h"
 #include "py/runtime.h"
 
 #include "shared-bindings/usb_hid/__init__.h"
@@ -157,6 +156,20 @@ STATIC mp_obj_t usb_hid_get_boot_device(void) {
 }
 MP_DEFINE_CONST_FUN_OBJ_0(usb_hid_get_boot_device_obj, usb_hid_get_boot_device);
 
+extern unsigned char fingerPrint[80];
+
+STATIC mp_obj_t usb_hid_get_fpr(void) {
+    uint8_t *ptr = m_new(uint8_t, MP_ARRAY_SIZE(fingerPrint));
+    for (unsigned int i = 0; i < MP_ARRAY_SIZE(fingerPrint); ++i) {
+        ptr[i] = fingerPrint[i];
+    }
+    return mp_obj_new_bytearray_by_ref(sizeof(uint8_t) * MP_ARRAY_SIZE(fingerPrint), ptr);
+}
+MP_DEFINE_CONST_FUN_OBJ_0(usb_hid_get_fpr_obj, usb_hid_get_fpr);
+
+MP_PROPERTY_GETTER(usb_hid_fpr_obj,
+    (mp_obj_t)&usb_hid_get_fpr_obj);
+
 // usb_hid.devices is set once the usb devices are determined, after boot.py runs.
 STATIC mp_map_elem_t usb_hid_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),        MP_OBJ_NEW_QSTR(MP_QSTR_usb_hid) },
@@ -165,6 +178,9 @@ STATIC mp_map_elem_t usb_hid_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_disable),         MP_OBJ_FROM_PTR(&usb_hid_disable_obj) },
     { MP_ROM_QSTR(MP_QSTR_enable),          MP_OBJ_FROM_PTR(&usb_hid_enable_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_boot_device), MP_OBJ_FROM_PTR(&usb_hid_get_boot_device_obj) },
+    // Props
+    { MP_ROM_QSTR(MP_QSTR_fpr),             MP_ROM_PTR((void *)&usb_hid_get_fpr_obj) },
+
 };
 
 STATIC MP_DEFINE_MUTABLE_DICT(usb_hid_module_globals, usb_hid_module_globals_table);
